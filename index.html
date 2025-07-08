@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Mutation Editor</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f9f9f9;
+      padding: 40px;
+    }
+
+    .outer-box {
+      background: white;
+      border: 2px solid #ccc;
+      border-radius: 10px;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background: #fefefe;
+    }
+
+    label {
+      font-weight: bold;
+    }
+
+    input[type="text"], input[type="number"], select {
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      width: 100%;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    button {
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 15px;
+      font-size: 14px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    #output {
+      margin-top: 20px;
+      white-space: pre-wrap;
+      background: #272822;
+      color: #f8f8f2;
+      padding: 15px;
+      border-radius: 8px;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="outer-box">
+    <div id="form-area">
+      <!-- Initial Form -->
+    </div>
+
+    <div class="buttons">
+      <button onclick="createForm()">Create New</button>
+      <button onclick="generateLua()">Generate</button>
+    </div>
+
+    <div id="output"></div>
+  </div>
+
+  <script>
+    let formId = 0;
+
+    function createForm() {
+      const container = document.createElement('div');
+      container.className = 'form-container';
+      container.innerHTML = `
+        <label>Name:</label>
+        <input type="text" class="name" placeholder="Enter name">
+        
+        <label>Choice:</label>
+        <select class="choice">
+          <option value="ADD">ADD</option>
+          <option value="TIMES">TIMES</option>
+        </select>
+        <label>Value:</label>
+        <input type="number" class="value" placeholder="Enter value">
+        <button onclick="this.parentElement.remove()">Delete</button>
+      `;
+      document.getElementById('form-area').appendChild(container);
+    }
+
+    function generateLua() {
+      const forms = document.querySelectorAll('.form-container');
+      let result = '';
+
+      forms.forEach((form, index) => {
+        const name = form.querySelector('.name').value.trim();
+        const choice = form.querySelector('.choice').value;
+        const value = form.querySelector('.value').value;
+
+        if (!name || !value) return;
+
+        const operator = choice === 'ADD' ? '+' : '*';
+        result += `{name="${name}", func=function CalculateMultiplier(mutationValue) mutationValue = mutationValue ${operator} ${value} end},\n`;
+      });
+
+      document.getElementById('output').textContent = result || '-- No valid forms to generate';
+    }
+
+    // Create one form on load
+    createForm();
+  </script>
+
+</body>
+</html>
