@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>FGG Helper Tool</title>
+  <title>FGG Tool Helper</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -15,7 +15,7 @@
       border: 2px solid #ccc;
       border-radius: 10px;
       padding: 20px;
-      max-width: 600px;
+      max-width: 650px;
       margin: 30px auto;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     }
@@ -46,6 +46,14 @@
       width: 100%;
     }
 
+    input[type="color"] {
+      width: 100%;
+      height: 40px;
+      padding: 0;
+      border: none;
+      background: none;
+    }
+
     .buttons {
       display: flex;
       gap: 10px;
@@ -66,7 +74,7 @@
       background-color: #45a049;
     }
 
-    #output, #fruit-output {
+    #output, #fruit-output, #rarity-output {
       white-space: pre-wrap;
       background: #272822;
       color: #f8f8f2;
@@ -75,13 +83,22 @@
       font-family: monospace;
       margin-top: 15px;
     }
+
+    .rarity-preview {
+      font-size: 24px;
+      font-weight: bold;
+      text-align: center;
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+    }
   </style>
 </head>
 <body>
 
   <!-- Section 1: Multiplier Generator -->
   <div class="outer-box">
-    <h2>Multiplier Form Generator</h2>
+    <h2>Mutation Editor</h2>
     <div id="form-area"></div>
 
     <div class="buttons">
@@ -119,14 +136,40 @@
     </div>
 
     <div class="buttons">
-      <button onclick="saveFruit()">Save Fruit</button>
+      <button onclick="saveFruit()">Generate</button>
     </div>
 
     <div id="fruit-output"></div>
   </div>
 
+  <!-- Section 3: Rarity Editor -->
+  <div class="outer-box">
+    <h2>Rarity Editor</h2>
+    <div class="form-container">
+      <label>Title:</label>
+      <input type="text" id="rarity-title" placeholder="e.g., Legendary" oninput="updateRarityPreview()">
+
+      <label>Rarity (%):</label>
+      <input type="number" id="rarity-percent" placeholder="e.g., 0.1" step="0.01">
+
+      <label>Start Color:</label>
+      <input type="color" id="rarity-start" value="#FFD700" onchange="updateRarityPreview()">
+
+      <label>End Color:</label>
+      <input type="color" id="rarity-end" value="#FF4500" onchange="updateRarityPreview()">
+
+      <h1 id="rarity-preview" class="rarity-preview">Preview</h1>
+    </div>
+
+    <div class="buttons">
+      <button onclick="saveRarity()">Generate</button>
+    </div>
+
+    <div id="rarity-output"></div>
+  </div>
+
   <script>
-    // Multiplier Generator
+    // ========== Multiplier Form ==========
     function createForm() {
       const container = document.createElement('div');
       container.className = 'form-container';
@@ -166,7 +209,7 @@
       document.getElementById('output').textContent = result || '-- No valid forms to generate';
     }
 
-    // Fruit Editor
+    // ========== Fruit Editor ==========
     let fruitData = {};
 
     function saveFruit() {
@@ -189,7 +232,6 @@
         StockSize: parseInt(stock) || 0
       };
 
-      // Format luac-valid Lua table
       let lines = ["{"];
       const keys = Object.keys(fruitData);
       keys.forEach((key, i) => {
@@ -207,8 +249,53 @@
       document.getElementById('fruit-output').textContent = lines.join("\n");
     }
 
-    // Init first multiplier form
-    createForm();
+    // ========== Rarity Editor ==========
+    let rarityData = {};
+
+    function updateRarityPreview() {
+      const title = document.getElementById('rarity-title').value.trim() || "Preview";
+      const start = document.getElementById('rarity-start').value;
+      const end = document.getElementById('rarity-end').value;
+
+      const preview = document.getElementById('rarity-preview');
+      preview.textContent = title;
+      preview.style.backgroundImage = `linear-gradient(to right, ${start}, ${end})`;
+    }
+
+    function saveRarity() {
+      const title = document.getElementById('rarity-title').value.trim();
+      const percent = parseFloat(document.getElementById('rarity-percent').value) || 0;
+      const start = document.getElementById('rarity-start').value;
+      const end = document.getElementById('rarity-end').value;
+
+      if (!title) {
+        alert("Rarity title required!");
+        return;
+      }
+
+      rarityData[title] = {
+        Rarity: percent,
+        StartColor: start,
+        EndColor: end
+      };
+
+      let lines = ["{"];
+      const keys = Object.keys(rarityData);
+      keys.forEach((key, i) => {
+        const val = rarityData[key];
+        lines.push(`  ["${key}"] = {`);
+        lines.push(`    ["Rarity"] = ${val.Rarity},`);
+        lines.push(`    ["StartColor"] = "${val.StartColor}",`);
+        lines.push(`    ["EndColor"] = "${val.EndColor}"`);
+        lines.push(i === keys.length - 1 ? `  }` : `  },`);
+      });
+      lines.push("}");
+
+      document.getElementById('rarity-output').textContent = lines.join("\n");
+    }
+
+    createForm(); // Create one multiplier form on load
+    updateRarityPreview(); // Init preview
   </script>
 
 </body>
