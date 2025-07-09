@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>FGG Tool Helper</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f0f0;
+      padding: 30px;
+    }
+    .outer-box {
+      background: white;
+      border: 2px solid #ccc;
+      border-radius: 10px;
+      padding: 20px;
+      max-width: 900px;
+      margin: 30px auto;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+    .form-container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background: #fefefe;
+    }
+    .buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 15px;
+      font-size: 14px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .toggle-cell {
+      padding: 6px;
+      background-color: #ccc;
+      border-radius: 4px;
+      text-align: center;
+      font-size: 12px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .toggle-cell.active {
+      background-color: #4CAF50;
+      color: white;
+    }
+    #code-grid-seeds,
+    #code-grid-mutations {
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      gap: 4px;
+      margin-top: 15px;
+    }
+    #code-output {
+      white-space: pre-wrap;
+      background: #272822;
+      color: #f8f8f2;
+      padding: 15px;
+      border-radius: 8px;
+      font-family: monospace;
+      margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="outer-box">
+    <h2>Code Creator</h2>
+    <div class="form-container">
+      <label>Dabloons:</label>
+      <input type="number" id="code-dabloons" placeholder="Enter amount">
+    </div>
+
+    <h3>Seeds</h3>
+    <div id="code-grid-seeds">Loading...</div>
+
+    <h3>Mutations</h3>
+    <div id="code-grid-mutations">Loading...</div>
+
+    <div class="buttons">
+      <button onclick="generateCode()">Generate</button>
+    </div>
+
+    <div id="code-output"></div>
+  </div>
+
+  <script>
+    let seeds = [], mutations = [];
+    let activeSeeds = new Set(), activeMutations = new Set();
+
+    function fetchList(url, targetArray, gridId, activeSet) {
+      fetch(url)
+        .then(res => res.text())
+        .then(text => {
+          targetArray.length = 0;
+          text.split(/\r?\n/).forEach((line, idx) => {
+            if (line.trim()) targetArray.push(line.trim());
+          });
+          renderGrid(targetArray, gridId, activeSet);
+        })
+        .catch(() => {
+          document.getElementById(gridId).textContent = "Failed to load " + url;
+        });
+    }
+
+    function renderGrid(data, containerId, activeSet) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = "";
+      data.forEach((item, index) => {
+        const div = document.createElement('div');
+        div.className = 'toggle-cell';
+        div.textContent = item;
+        div.onclick = () => {
+          if (activeSet.has(index)) {
+            activeSet.delete(index);
+            div.classList.remove('active');
+          } else {
+            activeSet.add(index);
+            div.classList.add('active');
+          }
+        };
+        container.appendChild(div);
+      });
+    }
+
+    function calculateChecksum(str) {
+      const primes = [31, 67, 113, 193, 389];
+      const len = str.length;
+      const prime = len < 10 ? primes[0] :
+                    len < 20 ? primes[1] :
+                    len < 30 ? primes[2] :
+                    len < 40 ? primes[3] : primes[4];
+      let total = 0;
+      for (let i = 0; i < str.length - 1; i++) {
+        total += str.charCodeAt(i) * str.charCodeAt(i + 1);
+      }
+      return total % prime;
+    }
+
+    function generateCode() {
+      const dabloons = document.getElementById('code-dabloons').value || '0';
+      const seedsUsed = Array.from(activeSeeds).sort((a,b)=>a-b).join(',');
+      const mutsUsed = Array.from(activeMutations).sort((a,b)=>a-b).join(',');
+      const base = `FGG_${dabloons}\\${seedsUsed}\\${mutsUsed}`;
+      const checksum = calculateChecksum(base);
+      document.getElementById('code-output').textContent = `${base}\\${checksum}`;
+    }
+
+    // Load files on start
+    fetchList('/seeds.txt', seeds, 'code-grid-seeds', activeSeeds);
+    fetchList('/mutations.txt', mutations, 'code-grid-mutations', activeMutations);
+  </script>
+</body>
+</html>
