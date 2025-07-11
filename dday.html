@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Update Countdown</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #f0f8ff;
+      color: #222;
+      padding: 2rem;
+    }
+    .bar-container {
+      width: 100%;
+      max-width: 600px;
+      height: 30px;
+      background: #ccc;
+      border-radius: 10px;
+      margin: 2rem auto;
+      overflow: hidden;
+      display: flex;
+    }
+    .bar-half {
+      width: 50%;
+      background: white;
+      transition: background 0.5s, width 0.5s;
+    }
+    .label {
+      margin-top: 1rem;
+      font-size: 1.2rem;
+      color: #444;
+    }
+    .countdown {
+      font-size: 1.5rem;
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Update Countdown</h1>
+  <div class="bar-container">
+    <div id="bar1" class="bar-half"></div>
+    <div id="bar2" class="bar-half"></div>
+  </div>
+  <div class="label" id="label">No Updates Yet</div>
+  <div class="countdown" id="countdown">Loading...</div>
+
+  <script>
+    // Set your update dates and labels here
+    const D1 = { date: new Date("2025-07-12T12:00:00"), label: "Start Development" };
+    const D2 = { date: new Date("2025-07-13T3:00:00"), label: "Update Release" };
+
+    const bar1 = document.getElementById("bar1");
+    const bar2 = document.getElementById("bar2");
+    const label = document.getElementById("label");
+    const countdown = document.getElementById("countdown");
+
+    function updateCountdown() {
+      const now = new Date();
+
+      let nextDate = null;
+      let start = null;
+      let end = null;
+      let progress = 0;
+
+      if (now < D1.date) {
+        nextDate = D1;
+        start = new Date();
+        end = D1.date;
+        progress = (now - start) / (end - start);
+        label.textContent = D1.label;
+        bar1.style.background = `linear-gradient(to right, limegreen ${progress * 100}%, white 0%)`;
+        bar2.style.background = "white";
+      } else if (now >= D1.date && now < D2.date) {
+        nextDate = D2;
+        start = D1.date;
+        end = D2.date;
+        progress = (now - start) / (end - start);
+        bar1.style.background = "limegreen";
+        bar2.style.background = `linear-gradient(to right, limegreen ${progress * 100}%, white 0%)`;
+        label.textContent = D2.label;
+      } else {
+        bar1.style.background = "white";
+        bar2.style.background = "white";
+        label.textContent = "No New Updates";
+        countdown.textContent = "No New Updates";
+        return;
+      }
+
+      // Countdown formatting
+      const diff = end - now;
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+      const minutes = Math.floor((diff / (1000 * 60)) % 60);
+      const seconds = Math.floor((diff / 1000) % 60);
+      countdown.textContent = `Time Remaining: ${days}d ${hours}h ${minutes}m ${seconds}s`;
+    }
+
+    // Initial update and interval every second
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+  </script>
+</body>
+</html>
