@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ToDo List</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    h2 {
+      margin-top: 0;
+    }
+    .board {
+      display: flex;
+      gap: 20px;
+    }
+    .column {
+      flex: 1;
+      background: #fff;
+      border-radius: 8px;
+      padding: 10px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    }
+    .task {
+      background: #e0e0e0;
+      padding: 8px;
+      margin: 6px 0;
+      border-radius: 6px;
+      cursor: grab;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 6px;
+      margin-bottom: 10px;
+    }
+    .controls {
+      margin-top: 20px;
+    }
+    button {
+      margin-right: 10px;
+    }
+    textarea {
+      width: 100%;
+      height: 100px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>My ToDo Board</h2>
+
+  <input id="newTaskInput" type="text" placeholder="New task..." />
+  <button onclick="addTask()">Add Task to TODO</button>
+
+  <div class="board">
+    <div class="column" ondrop="drop(event, 'todo')" ondragover="allowDrop(event)">
+      <h3>TODO</h3>
+      <div id="todo" class="task-list"></div>
+    </div>
+    <div class="column" ondrop="drop(event, 'doing')" ondragover="allowDrop(event)">
+      <h3>DOING</h3>
+      <div id="doing" class="task-list"></div>
+    </div>
+    <div class="column" ondrop="drop(event, 'done')" ondragover="allowDrop(event)">
+      <h3>DONE</h3>
+      <div id="done" class="task-list"></div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button onclick="saveBoard()">Save</button>
+    <button onclick="loadBoard()">Load</button>
+    <button onclick="clearBoard()">Clear</button>
+    <textarea id="saveData" placeholder="Copy/paste your save data here..."></textarea>
+  </div>
+
+  <script>
+    let idCounter = 0;
+
+    function addTask() {
+      const input = document.getElementById("newTaskInput");
+      const text = input.value.trim();
+      if (text !== "") {
+        createTaskElement(text, "todo");
+        input.value = "";
+      }
+    }
+
+    function createTaskElement(text, sectionId, taskId = null) {
+      const task = document.createElement("div");
+      task.className = "task";
+      task.textContent = text;
+      task.draggable = true;
+      task.id = taskId || "task-" + idCounter++;
+      task.ondragstart = (e) => e.dataTransfer.setData("text", task.id);
+      document.getElementById(sectionId).appendChild(task);
+    }
+
+    function allowDrop(event) {
+      event.preventDefault();
+    }
+
+    function drop(event, sectionId) {
+      event.preventDefault();
+      const taskId = event.dataTransfer.getData("text");
+      const task = document.getElementById(taskId);
+      document.getElementById(sectionId).appendChild(task);
+    }
+
+    function saveBoard() {
+      const data = {
+        todo: getTasks("todo"),
+        doing: getTasks("doing"),
+        done: getTasks("done"),
+      };
+      localStorage.setItem("todoBoard", JSON.stringify(data));
+      document.getElementById("saveData").value = JSON.stringify(data, null, 2);
+      alert("Saved!");
+    }
+
+    function loadBoard() {
+      let data;
+      try {
+        const text = document.getElementById("saveData").value.trim();
+        data = text ? JSON.parse(text) : JSON.parse(localStorage.getItem("todoBoard"));
+      } catch {
+        alert("Invalid JSON.");
+        return;
+      }
+      clearBoard(false);
+      ["todo", "doing", "done"].forEach((section) => {
+        if (data[section]) {
+          data[section].forEach((t) => createTaskElement(t.text, section, t.id));
+        }
+      });
+    }
+
+    function clearBoard(clearStorage = true) {
+      ["todo", "doing", "done"].forEach((id) => {
+        document.getElementById(id).innerHTML = "";
+      });
+      if (clearStorage) {
+        localStorage.removeItem("todoBoard");
+        document.getElementById("saveData").value = "";
+      }
+    }
+
+    function getTasks(sectionId) {
+      return Array.from(document.getElementById(sectionId).children).map((el) => ({
+        id: el.id,
+        text: el.textContent
+      }));
+    }
+
+    // Load on startup
+    window.onload = loadBoard;
+  </script>
+</body>
+</html>
